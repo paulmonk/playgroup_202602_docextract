@@ -9,7 +9,7 @@
 # e.g. $ cut -f1 in.tsv | head -n 20 # list first 20 items
 
 # extract the identified dev-0 good-looking examples
-export ROWS='4p;5p;6p;7p;11p;15p;18p;14p;16p;17p' # first identify the rows we need to process
+export ROWS='4p;5p;6p;7p;11p;15p;18p;14p;16p;17p;47p' # first identify the rows we need to process
 export DATA_FOLDER='/home/ian/workspace/personal/playgroup/playgroup_202602_docextract/data'
 export BENCHMARK_FOLDER='/media/ian/data/playgroup_datasets/kleister-charity/dev-0'
 
