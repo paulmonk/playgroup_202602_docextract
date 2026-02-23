@@ -9,25 +9,9 @@ $ ./annex-get-all-from-s3.sh
 
 dev-0$ xz -d in.tsv.xz # uncompress input data
 # e.g. $ cut -f1 in.tsv | head -n 20 # list first 20 items
-
-$ cd dev-0
-# extract the identified dev-0 good-looking examples
-export ROWS='4p;5p;6p;7p;11p;15p;18p' # first identify the rows we need to process
-export DATA_FOLDER='/home/ian/workspace/personal/playgroup/playgroup_202602_docextract/data'
-export BENCHMARK_FOLDER='/media/ian/data/playgroup_datasets/kleister-charity/dev-0'
-
-cd $BENCHMARK_FOLDER
-# extract only the relevant items of input and gold standard data
-sed -n $ROWS in.tsv > playgroup_dev_in.tsv
-sed -n $ROWS expected.tsv > playgroup_dev_expected.tsv
-# extract a list of pdf names we need
-cut -f1 in.tsv | sed -n $ROWS > pdf_names.txt
-# copy the pdf files and our tsv files to the project data folder
-while IFS= read -r filename; do     cp "../documents/$filename" "$DATA_FOLDER/$filename"; done < pdf_names.txt
-cp pdf_names.txt $DATA_FOLDER
-mv playgroup_dev_*.tsv $DATA_FOLDER
-
 ```
+
+`utility/extract_copy_kleister_charity.sh` will do the copy and edit of files to `../data`.
 
 ## items reviewed
 
@@ -48,7 +32,7 @@ cc9880ece943bf688b49359a8c219b04.pdf, 40, , slightly harder?
 bfd08fe466e142006e4a04e9630d4579.pdf, 39, , USD?! (includes GBP/USD but that seems silly?)
 c1e453df06418b5289b40d04729a09c5.pdf, 18, clean
 44ba842bbbd4f18587ad8ae3fe4ecdd7.pdf, 54, 5, scan, HARD-Y
-6f9b8f27fd43be13d822c0b4654be167.pdf, 6, , could have been good 'this year last year' but has a typo in gold std Y(needs fix)
+6f9b8f27fd43be13d822c0b4654be167.pdf, 6, , could have been good 'this year last year' but has a typo in gold std Y(needs fix) Y
 556ee39a83d9a15738918e8e60dc45a7.pdf, 20, 5, clean, HARD-Y
 cfe956d594cd45a0267d966dadebf72e.pdf, 72, 5, clean, HARD-Y (000 summary of numbers)
 cc19e4fd0c4a605a7f537050df52483e.pdf, 15, 5, scan (offset), EASY-Y
@@ -65,3 +49,7 @@ cc19e4fd0c4a605a7f537050df52483e.pdf, 15, 5, scan (offset), EASY-Y
 # Things we could test
 
 * calling llm_openrouter with an unknown model name, only_providers should raise
+
+# Future topics?
+
+* get attribution for each page?

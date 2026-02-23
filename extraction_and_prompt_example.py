@@ -22,6 +22,8 @@ The raw text from the document follows, after this please output the extracted i
 
 if __name__ == "__main__":
 
+    # https://openrouter.ai/anthropic/claude-3.5-haiku
+    # see llm_openrouter.py for more models
     model = "anthropic/claude-3.5-haiku"
     prompt_template = prompt_template_charity_number
 
@@ -34,5 +36,5 @@ if __name__ == "__main__":
             pdf_filename, keys_ignore, text_djvu2hocr, text_tesseract411, text_tesseractmarch2020, text_combined = item
 
             # call llm
-            response = llm_openrouter.call_llm(model, prompt_template, text_combined)
+            response = llm_openrouter.call_llm(model, prompt_template, text_djvu2hocr)
             print(response)

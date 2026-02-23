@@ -9,7 +9,9 @@ You should be able to run
 
 # What's here
 
-Locally you've got a small export from the much larger https://github.com/applicaai/kleister-charity# dataset. I've taken a small set of PDFs (<= 20 pages each) and the relevant exports of text that they've provided (using djvu2hocr, tesseract 4.11, tesseract from march 2020, a combination of all 3). The chosen pdfs come from the `dev-0` folder. 
+Locally you've got a small export from the much larger https://github.com/applicaai/kleister-charity# dataset. I've taken a small set of PDFs and the relevant exports of text that they've provided (using djvu2hocr, tesseract 4.11, tesseract from march 2020, a combination of all 3). The chosen pdfs come from the `dev-0` folder. 
+
+The PDFs start smaller (<= 20 pages) and get bigger towards the end of the set.
 
 The PDFs are drawn from a heterogenous collection of UK charity financial documents, from a corpus of circa 3,000 documents of length up to 200 pages.
 
@@ -34,7 +36,7 @@ Here you have a handful of shorter PDFs. Imagine you have 1000s of varying lengt
 * ...
 * build an extractor for the input files that generates an output file similar to `playgroup_dev_expected.tsv` maybe called `playgroup_dev_extracted.tsv`
 * try `score.py` (it is a simple Accuracy based scorer, hardcoded filenames, very simple)
-* either try their evaluation (https://github.com/applicaai/kleister-charity?tab=readme-ov-file#evaluation) or modify `scorer.py`
+* either try their evaluation (https://github.com/applicaai/kleister-charity?tab=readme-ov-file#evaluation) or modify `score.py`
   * consider how close everything should be
   * `geval` with BLEU, WER (word error rate), CER (character error rate) etc is pretty interesting
   * maybe we want a different metric like BLEU on some fields? We should discuss
