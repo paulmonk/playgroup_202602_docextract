@@ -1,0 +1,184 @@
+[project]
+name = "playgroup-docextract"
+version = "0.1.0"
+description = "Playgroup: document extraction from UK charity PDFs"
+requires-python = "==3.13.*"
+dependencies = [
+    "levenshtein",
+    "openai",
+    "pydantic",
+    "pymupdf",
+    "python-dotenv",
+]
+
+[dependency-groups]
+dev = [
+    "prek",
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-pretty",
+    "pytest-randomly",
+    "pytest-socket",
+    "ruff",
+    "ty",
+]
+
+# Type Checking
+# ===================
+[tool.ty.environment]
+python-version = "3.13"
+
+# Linting
+# ===================
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+[tool.ruff.lint]
+select = [
+  "A",    # flake8-builtins
+  "B",    # flake8-bugbear
+  "C4",   # flake8-comprehensions
+  "C90",  # maccabe
+  "COM",  # flake8-commas
+  "D",    # pydocstyle
+  "DTZ",  # flake8-datetimez
+  "E",    # pycodestyle
+  "ERA",  # flake8-eradicate
+  "EXE",  # flake8-executable
+  "F",    # pyflakes
+  "FBT",  # flake8-boolean-trap
+  "FLY",  # pyflint
+  "FURB", # refurb
+  "G",    # flake8-logging-format
+  "I",    # isort
+  "ICN",  # flake8-import-conventions
+  "ISC",  # flake8-implicit-str-concat
+  "LOG",  # flake8-logging
+  "N",    # pep8-naming
+  "PERF", # perflint
+  "PIE",  # flake8-pie
+  "PL",   # pylint
+  "PT",   # flake8-pytest-style
+  "PTH",  # flake8-use-pathlib
+  "RET",  # flake8-return
+  "RSE",  # flake8-raise
+  "RUF",  # ruff
+  "S",    # flake8-bandit
+  "SIM",  # flake8-simpify
+  "SLF",  # flake8-self
+  "SLOT", # flake8-slots
+  "T100", # flake8-debugger
+  "TRY",  # tryceratops
+  "UP",   # pyupgrade
+  "W",    # pycodestyle
+  "YTT",  # flake8-2020
+]
+ignore = [
+  "COM812", # trailing comma, conflicts with `ruff format`
+  # Different doc rules that we don't really care about:
+  "D100",
+  "D104",
+  "D106",
+  "D107",    # __init__ methods don't need docstrings
+  "D203",
+  "D212",
+  "D401",
+  "D404",
+  "D405",
+  "ISC001",  # implicit string concat conflicts with `ruff format`
+  "ISC003",  # prefer explicit string concat over implicit concat
+  "PLR09",   # we have our own complexity rules
+  "PLR2004", # do not report magic numbers
+  "TRY003",  # long exception messages from `tryceratops`
+]
+
+extend-safe-fixes = [
+  # non-pep585-annotation
+  "UP006",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**/*.py" = [
+  "D103",    # Relax docstring requirements
+  "FBT001",  # False positive for boolean trap
+  "FLY002",  # str.join() is clearer than f-strings for multi-item test fixtures
+  "PLC0415", # imports inside functions are intentional for lazy loading in tests
+  "S101",    # asserts
+  "S105",    # hardcoded passwords
+  "S108",    # temp file usage is fine in tests
+  "S110",    # try-except-pass is fine when we only care about side effects
+  "S404",    # subprocess calls are for tests
+  "S603",    # do not require `shell=True`
+  "S607",    # partial executable paths
+  "SIM105",  # contextlib.suppress not always clearer in tests
+  "SLF001",  # Private method access needed for tests
+]
+
+[tool.ruff.lint.flake8-import-conventions]
+banned-from = [
+  "ast",
+  "datetime",
+  "decimal",
+  "itertools",
+  "operator",
+  "numpy",
+  "polars",
+  "re",
+]
+aliases = { datetime = "dt", decimal = "dec", numpy = "np", polars = "pl" }
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.lint.isort]
+section-order = [
+  "future",
+  "standard-library",
+  "third-party",
+  "first-party",
+  "local-folder",
+]
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+# Testing
+# ===================
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+log_cli = true
+xfail_strict = true
+addopts = """
+    --allow-hosts=127.0.0.1,localhost,::1,\
+    --allow-unix-socket
+    --capture=fd
+    --color=yes
+    --durations=10
+    --disable-socket
+    --failed-first
+    --import-mode=importlib
+    --showlocals
+    --strict-config
+    --strict-markers
+    --tb=short
+    """
+filterwarnings = [
+    "ignore:builtin type Swig:DeprecationWarning",
+    "ignore:builtin type swig:DeprecationWarning",
+]
