@@ -44,7 +44,7 @@ cc19e4fd0c4a605a7f537050df52483e.pdf, 15, 5, scan (offset), EASY-Y
 ## Fixes
 
 `Hitchin_Education_Foundation charity_number` needs postcode SG18_9N4 -> SG18_9NR.
-`Yorkshire_Federation_Of_Young_Farmers'_Clubs` needs an incoming funds of 107771.00 -> 107711.00 
+`Yorkshire_Federation_Of_Young_Farmers'_Clubs` needs an incoming funds of 107771.00 -> 107711.00
 
 # Things we could test
 
