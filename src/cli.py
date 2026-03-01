@@ -6,7 +6,7 @@ import argparse
 import logging
 import sys
 
-from commands import compare, pipeline, score
+from commands import compare, extract, score
 
 
 def _setup_logging(*, verbosity: int) -> None:
@@ -49,7 +49,7 @@ def _build_parser() -> argparse.ArgumentParser:
     extract_parser = subparsers.add_parser("extract", help="Run the extraction pipeline.")
     extract_parser.add_argument(
         "--source",
-        choices=sorted([*pipeline.SOURCE_COLUMN_BY_NAME, "pdf", "pdf-vision"]),
+        choices=sorted([*extract.SOURCE_COLUMN_BY_NAME, "pdf", "pdf-vision"]),
         default="combined",
         help=(
             "OCR column, 'pdf' for text extraction, or 'pdf-vision'"
@@ -116,7 +116,7 @@ def main() -> None:
         raise SystemExit(1)
 
     if args.command == "extract":
-        pipeline.run(
+        extract.run(
             source=args.source,
             model=args.model,
             input_path=args.input_path,
