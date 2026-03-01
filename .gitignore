@@ -1,5 +1,16 @@
-__pycache__
+.DS_Store
+.idea
+.ipynb_checkpoints/
+.vscode
+__pycache__/
+*.pyc
+*.swp
+.venv/
+.env
+
+# Project-specific
+logs/
 llm_calls.log
 brief.md
-.env
 playgroup_email.txt
+expts/
