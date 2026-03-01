@@ -17,6 +17,7 @@ from pathlib import Path
 
 import Levenshtein
 
+from const import DATE_FIELDS, MONEY_FIELDS
 from lib import utils
 
 logger = logging.getLogger(__name__)
@@ -125,9 +126,9 @@ def normalise_value(key: str, *, value: str) -> str:
         The normalised value string.
     """
     value = value.strip()
-    if key in utils.MONEY_FIELDS:
+    if key in MONEY_FIELDS:
         return utils.normalise_money(value).upper()
-    if key in utils.DATE_FIELDS:
+    if key in DATE_FIELDS:
         return utils.normalise_date(value).upper()
     return value.upper()
 
@@ -200,9 +201,7 @@ def compute_f1(
                 predicted_val = predicted_by_key[key]
                 dist = Levenshtein.distance(expected_val, predicted_val)
                 pct_diff = (
-                    _money_pct_diff(expected_val, predicted_val)
-                    if key in utils.MONEY_FIELDS
-                    else None
+                    _money_pct_diff(expected_val, predicted_val) if key in MONEY_FIELDS else None
                 )
                 mismatches.append(
                     Mismatch(

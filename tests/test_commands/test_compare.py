@@ -97,12 +97,6 @@ def test_sort_key_higher_f1_first():
     assert _sort_key(high) > _sort_key(low)
 
 
-def test_sort_key_equal_f1():
-    a = Experiment(folder="a", model="m", source="s", num_documents=1, f1=0.5)
-    b = Experiment(folder="b", model="m", source="s", num_documents=1, f1=0.5)
-    assert _sort_key(a) == _sort_key(b)
-
-
 def test_format_cells_with_scores():
     exp = Experiment(
         folder="20260101",

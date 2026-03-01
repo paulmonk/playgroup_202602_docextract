@@ -16,7 +16,7 @@ from commands.score import (
     normalise_value,
     save_scores,
 )
-from lib.utils import MONEY_FIELDS
+from const import MONEY_FIELDS
 
 
 @pytest.mark.parametrize(

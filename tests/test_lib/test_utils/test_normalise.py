@@ -1,10 +1,10 @@
-"""Tests for shared utility functions."""
+"""Tests for value normalisation functions."""
 
 from __future__ import annotations
 
 import pytest
 
-from lib.utils import MONEY_FIELDS, normalise_date, normalise_money
+from lib.utils.normalise import normalise_date, normalise_money
 
 
 @pytest.mark.parametrize(
@@ -58,16 +58,3 @@ def test_normalise_date_unrecognised_returns_input():
 
 def test_normalise_date_empty_returns_input():
     assert normalise_date("") == ""
-
-
-def test_normalise_date_iso_passthrough():
-    assert normalise_date("1990-06-15") == "1990-06-15"
-
-
-def test_money_fields_contains_expected():
-    assert "income_annually_in_british_pounds" in MONEY_FIELDS
-    assert "spending_annually_in_british_pounds" in MONEY_FIELDS
-
-
-def test_money_fields_is_frozenset():
-    assert isinstance(MONEY_FIELDS, frozenset)

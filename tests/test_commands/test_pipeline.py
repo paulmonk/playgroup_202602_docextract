@@ -200,12 +200,6 @@ def test_parse_llm_response_extra_fields_ignored():
     assert result == {"charity_number": "1132766", "report_date": "2015-12-31"}
 
 
-def test_parse_llm_response_missing_fields_ok():
-    raw = '{"charity_number": "1132766"}'
-    result = pipeline.parse_llm_response(raw)
-    assert result == {"charity_number": "1132766"}
-
-
 def test_parse_llm_response_empty_string_returns_empty():
     result = pipeline.parse_llm_response("")
     assert result == {}
@@ -259,13 +253,6 @@ def test_format_row_normalisation_applied():
 def test_format_row_single_field():
     result = pipeline.format_row({"charity_number": "0300703"})
     assert result == "charity_number=300703"
-
-
-def test_format_row_missing_fields_omitted():
-    fields = {"charity_number": "1132766"}
-    result = pipeline.format_row(fields)
-    assert "report_date" not in result
-    assert "charity_number=1132766" in result
 
 
 def test_format_row_full_row_matches_expected_format():

@@ -1,27 +1,11 @@
-"""Shared utilities for text extraction and experiment management.
-
-Centralises field-type constants and normalisation so the extraction
-pipeline and the scorer always agree on how values are compared.
-"""
+"""Value normalisation functions for money and date fields."""
 
 from __future__ import annotations
 
 import datetime as dt
 import logging
-from typing import Final
 
 logger = logging.getLogger(__name__)
-
-# Fields where values are monetary amounts (normalised to 2dp)
-MONEY_FIELDS: Final[frozenset[str]] = frozenset(
-    {
-        "income_annually_in_british_pounds",
-        "spending_annually_in_british_pounds",
-    }
-)
-
-# Fields containing dates (normalised to ISO 8601)
-DATE_FIELDS: Final[frozenset[str]] = frozenset({"report_date"})
 
 
 def normalise_money(value: str) -> str:
@@ -63,27 +47,3 @@ def normalise_date(value: str) -> str:
 
     logger.debug("Date normalisation fallback for unrecognised format: %r", value)
     return value
-
-
-def format_table(
-    headers: tuple[str, ...],
-    rows: list[tuple[str, ...]],
-) -> list[str]:
-    """Format rows as a left-justified, fixed-width text table.
-
-    Args:
-        headers: Column header strings.
-        rows: Data rows, each a tuple of cell strings matching headers length.
-
-    Returns:
-        List of lines: header, separator, then one line per row.
-    """
-    widths = [len(h) for h in headers]
-    for row in rows:
-        for i, cell in enumerate(row):
-            widths[i] = max(widths[i], len(cell))
-
-    def fmt(cells: tuple[str, ...]) -> str:
-        return "  ".join(cell.ljust(widths[i]) for i, cell in enumerate(cells)).rstrip()
-
-    return [fmt(headers), "  ".join("-" * w for w in widths), *(fmt(r) for r in rows)]

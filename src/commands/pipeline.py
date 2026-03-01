@@ -19,6 +19,7 @@ from typing import Final
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
+from const import DATE_FIELDS, MONEY_FIELDS, UPPERCASE_FIELDS
 from lib import llm_openrouter, pdf_extract, utils
 
 # OCR text fields in the input TSV can be very large
@@ -42,14 +43,6 @@ _UK_POSTCODE_RE: Final[re.Pattern[str]] = re.compile(
 
 # Matches content between triple backticks, with optional language tag
 _BACKTICK_RE: Final[re.Pattern[str]] = re.compile(r"```(\w*)\n?(.*?)```", re.DOTALL)
-
-# Fields that should be uppercased in Kleister output
-_UPPERCASE_FIELDS: Final[frozenset[str]] = frozenset(
-    {
-        "address__post_town",
-        "address__postcode",
-    }
-)
 
 # LLM system prompt, passed via the instructions/system role
 SYSTEM_PROMPT: Final[str] = """\
@@ -90,6 +83,7 @@ object with field names as keys. Omit any field you cannot find.
 - address__street_line:
     Street name and number only from the registered/principal address.
     Do not include building names, floor numbers, unit numbers, or locality names.
+    Example: "Ibex House, 42-47 Minories" -> "42-47 Minories" (exclude building name).
 - charity_name:
     Full registered name as it appears in the document, including
     apostrophes.
@@ -119,6 +113,7 @@ Example 2:
   "charity_name": "1st Bourne End Scout Group"
 }}
 ```
+
 </examples>
 """
 
@@ -411,16 +406,16 @@ def normalise_for_output(key: str, *, value: str) -> str:
     # Normalise smart/curly quotes to straight apostrophes and quotes
     value = value.replace("\u2018", "'").replace("\u2019", "'")
     value = value.replace("\u201c", '"').replace("\u201d", '"')
-    if key in utils.MONEY_FIELDS:
+    if key in MONEY_FIELDS:
         return utils.normalise_money(value)
-    if key in utils.DATE_FIELDS:
+    if key in DATE_FIELDS:
         return utils.normalise_date(value)
     if key == "charity_number":
         try:
             return str(int(value))
         except ValueError:
             return value
-    if key in _UPPERCASE_FIELDS:
+    if key in UPPERCASE_FIELDS:
         return value.upper().replace(" ", "_")
     return value.replace(" ", "_")
 
