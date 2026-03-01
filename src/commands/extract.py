@@ -581,9 +581,15 @@ def run(
 
     # Create experiment folder and attach per-experiment LLM log
     folder = _create_timestamped_folder()
+    # Capture full prompts and responses at DEBUG level in the log file.
+    # propagate=False stops them reaching the console handler.
     llm_logger = logging.getLogger("lib.llm_openrouter")
+    prev_level = llm_logger.level
+    llm_logger.setLevel(logging.DEBUG)
+    llm_logger.propagate = False
     log_path = Path("expts") / folder / "llm_calls.log"
     fh = logging.FileHandler(log_path)
+    fh.setLevel(logging.DEBUG)
     fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
     llm_logger.addHandler(fh)
 
@@ -630,6 +636,8 @@ def run(
         )
     finally:
         llm_logger.removeHandler(fh)
+        llm_logger.setLevel(prev_level)
+        llm_logger.propagate = True
         fh.close()
 
     logger.info("Results written to expts/%s/", folder)
