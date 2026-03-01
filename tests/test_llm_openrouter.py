@@ -41,7 +41,6 @@ def test_get_providers_unknown_model_raises():
 
 def test_get_client_creates_on_first_call(mocker):
     mock_openai = mocker.patch("lib.llm_openrouter.OpenAI")
-    mocker.patch("lib.llm_openrouter.load_dotenv")
     mocker.patch("lib.llm_openrouter.os.getenv", return_value="test-key")
     client = llm_openrouter._get_client()
     mock_openai.assert_called_once()
@@ -50,7 +49,6 @@ def test_get_client_creates_on_first_call(mocker):
 
 def test_get_client_reuses_on_second_call(mocker):
     mock_openai = mocker.patch("lib.llm_openrouter.OpenAI")
-    mocker.patch("lib.llm_openrouter.load_dotenv")
     mocker.patch("lib.llm_openrouter.os.getenv", return_value="test-key")
     first = llm_openrouter._get_client()
     second = llm_openrouter._get_client()
@@ -59,14 +57,12 @@ def test_get_client_reuses_on_second_call(mocker):
 
 
 def test_get_client_missing_api_key_raises(mocker):
-    mocker.patch("lib.llm_openrouter.load_dotenv")
     mocker.patch("lib.llm_openrouter.os.getenv", return_value=None)
     with pytest.raises(RuntimeError, match="OPENROUTER_API_KEY is not set"):
         llm_openrouter._get_client()
 
 
 def test_get_client_empty_api_key_raises(mocker):
-    mocker.patch("lib.llm_openrouter.load_dotenv")
     mocker.patch("lib.llm_openrouter.os.getenv", return_value="")
     with pytest.raises(RuntimeError, match="OPENROUTER_API_KEY is not set"):
         llm_openrouter._get_client()

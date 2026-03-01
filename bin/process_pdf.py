@@ -12,7 +12,6 @@ from pathlib import Path
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, DocumentContentFormat
 from azure.core.credentials import AzureKeyCredential
-from dotenv import load_dotenv
 
 
 def parse_args():
@@ -31,9 +30,6 @@ def parse_args():
 def main():
     """Main function to process PDF document."""
     args = parse_args()
-
-    # Load environment variables
-    load_dotenv()
 
     api_key = os.getenv("AZURE_DI_KEY")
     endpoint = os.getenv("AZURE_DI_ENDPOINT")

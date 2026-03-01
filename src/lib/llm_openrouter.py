@@ -8,7 +8,6 @@ import os
 from collections.abc import Callable, Mapping
 from typing import Any, Final
 
-from dotenv import load_dotenv
 from openai import APIConnectionError, APIError, APITimeoutError, OpenAI, RateLimitError
 
 logger = logging.getLogger(__name__)
@@ -47,7 +46,6 @@ def _get_client() -> OpenAI:
     """
     global _client  # noqa: PLW0603
     if _client is None:
-        load_dotenv()
         api_key = os.getenv("OPENROUTER_API_KEY")
         if not api_key:
             raise RuntimeError(
