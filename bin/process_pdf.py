@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Process PDF documents using Microsoft Azure Document Intelligence."""
 
+from __future__ import annotations
+
 import argparse
 import json
 import os
@@ -46,7 +48,7 @@ def main():
         print(f"Error: Source file not found: {args.source_pdf}")
         sys.exit(1)
 
-    if not source_path.suffix.lower() == ".pdf":
+    if source_path.suffix.lower() != ".pdf":
         print(f"Warning: File does not have .pdf extension: {args.source_pdf}")
 
     # Create output filename
@@ -57,13 +59,11 @@ def main():
 
     # Initialize the Document Intelligence client
     client = DocumentIntelligenceClient(
-        endpoint=endpoint,
-        credential=AzureKeyCredential(api_key),
-        api_version='2024-11-30'
+        endpoint=endpoint, credential=AzureKeyCredential(api_key), api_version="2024-11-30"
     )
 
     # Read the PDF file
-    with open(source_path, "rb") as pdf_file:
+    with source_path.open("rb") as pdf_file:
         pdf_bytes = pdf_file.read()
 
     # Analyze the document with markdown output format
@@ -72,8 +72,6 @@ def main():
         model_id="prebuilt-layout",
         pages=None,
         body=AnalyzeDocumentRequest(bytes_source=pdf_bytes),
-        #body=pdf_bytes,
-        #content_type='application/octet-stream',
         output_content_format=DocumentContentFormat.MARKDOWN,
     )
 
@@ -84,11 +82,11 @@ def main():
     result_dict = result.as_dict()
 
     # Save the full JSON response
-    with open(output_path, "w", encoding="utf-8") as json_file:
+    with output_path.open("w", encoding="utf-8") as json_file:
         json.dump(result_dict, json_file, indent=2, ensure_ascii=False)
 
     print(f"Analysis complete. Results saved to: {output_path}")
-    print(f"Content format: markdown")
+    print("Content format: markdown")
     print(f"Pages analyzed: {len(result_dict.get('pages', []))}")
 
 
