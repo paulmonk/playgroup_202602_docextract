@@ -1,46 +1,115 @@
+# playgroup-docextract
 
-# Setup
+Fork of [ianozsvald/playgroup_202602_docextract](https://github.com/ianozsvald/playgroup_202602_docextract).
 
-Read `QUICKSTART.md` to get going.
+Extract structured fields from UK charity financial PDFs using LLMs,
+then score and compare results across models and text sources.
 
-You should be able to run
-* `llm_openrouter.py` and it'll try to extract a fact from a canned bit of text. If this works and you get some JSON, you're in a good state.
-* `extraction_and_prompt_example.py` and it'll read the input tsv (see below), run a simple prompt and extract something.
+Built on a subset of the [Kleister Charity](https://github.com/applicaai/kleister-charity)
+dataset: 11 documents ranging from short to 200+ pages, drawn from a
+heterogeneous corpus of ~3,000 UK charity reports.
 
-# What's here
+## Extracted fields
 
-Locally you've got a small export from the much larger https://github.com/applicaai/kleister-charity# dataset. I've taken a small set of PDFs and the relevant exports of text that they've provided (using djvu2hocr, tesseract 4.11, tesseract from march 2020, a combination of all 3). The chosen pdfs come from the `dev-0` folder.
+| Field | Format |
+|---|---|
+| `charity_number` | Integer, no leading zeros |
+| `charity_name` | Full registered name |
+| `report_date` | `YYYY-MM-DD` |
+| `income_annually_in_british_pounds` | Number, 2 decimal places |
+| `spending_annually_in_british_pounds` | Number, 2 decimal places |
+| `address__post_town` | Town name |
+| `address__postcode` | UK postcode |
+| `address__street_line` | Street and number only |
 
-The PDFs start smaller (<= 20 pages) and get bigger towards the end of the set.
+## Setup
 
-The PDFs are drawn from a heterogenous collection of UK charity financial documents, from a corpus of circa 3,000 documents of length up to 200 pages.
+Requires Python 3.13 and [uv](https://docs.astral.sh/uv/).
 
-In `data` we have
-* `playgroup_dev_in.tsv` based on `in.tsv`
-* `playgroup_dev_expected.tsv` based on `expected.tsv`
-* `pdf_names.txt` which lists each pdf name in the same order as `in|expected.tsv` files.
+```bash
+uv sync
+echo 'OPENROUTER_API_KEY=your-key-here' > .env
+```
 
-# Tasks
+## Usage
 
-Here you have a handful of shorter PDFs. Imagine you have 1000s of varying lengths (up to 200 pages) - you want a fast and _inexpensive_ solution that'll scale. What's the best system you can build, without using super-expensive frontier models, that might scale? Where are the limits?
+The CLI has three commands: `extract`, `score`, and `compare`.
 
-* run `llm_router.py` and check it is working with your `.env`
-* run `extract_and_prompt_example.py` to check a prompt works and something is extracted
-* you want to extract
-  * charity number
-  * reporting date (YYYY-MM-DD)
-  * annual income (GBP) for the most recent year
-  * annual outgoings (GBP) for the most recent year
-  * post code for the charity address
-  * other fields are a bonus
-* ...
-* build an extractor for the input files that generates an output file similar to `playgroup_dev_expected.tsv` maybe called `playgroup_dev_extracted.tsv`
-* try `score.py` (it is a simple Accuracy based scorer, hardcoded filenames, very simple)
-* either try their evaluation (https://github.com/applicaai/kleister-charity?tab=readme-ov-file#evaluation) or modify `score.py`
-  * consider how close everything should be
-  * `geval` with BLEU, WER (word error rate), CER (character error rate) etc is pretty interesting
-  * maybe we want a different metric like BLEU on some fields? We should discuss
+### Run an extraction
 
-# License
+```bash
+just extract --model anthropic/claude-3.5-haiku --source pdf
+```
 
-* The data is UK open data see https://github.com/applicaai/kleister-charity/issues/2
+Text sources: `combined` (default), `djvu2hocr`, `tesseract411`,
+`tesseract_march2020`, `pdf` (PyMuPDF text extraction), `pdf-vision`
+(text + images).
+
+Each run creates a timestamped folder under `expts/` with the
+extracted TSV, config, LLM call log, and scores.
+
+### Score a single experiment
+
+```bash
+just score-expt 20260227T15_50_28
+```
+
+```
+Overall
+---------  ------------
+Documents  11
+F1         0.902
+Precision  0.886
+Recall     0.918
+Matched    78/85 fields
+
+Field                                Score  F1
+-----------------------------------  -----  -----
+address__post_town                   10/11  0.909
+address__postcode                    10/10  0.952
+address__street_line                 8/9    0.800
+charity_name                         6/11   0.545
+charity_number                       11/11  1.000
+income_annually_in_british_pounds    11/11  1.000
+report_date                          11/11  1.000
+spending_annually_in_british_pounds  11/11  1.000
+```
+
+Failures are shown with expected vs predicted values and edit distance.
+
+### Compare all experiments
+
+```bash
+just compare
+```
+
+```
+Timestamp          Model                          Source      Docs  F1     Prec   Recall  Matched
+-----------------  -----------------------------  ----------  ----  -----  -----  ------  -----------
+20260227T15_50_28  google/gemini-3-flash-preview  pdf         11    0.902  0.886  0.918   78/85 (92%)
+20260227T16_02_17  google/gemini-3-flash-preview  pdf-vision  11    0.902  0.886  0.918   78/85 (92%)
+20260227T15_47_27  anthropic/claude-haiku-4.5     pdf         11    0.879  0.864  0.894   76/85 (89%)
+20260227T15_31_50  anthropic/claude-3.5-haiku     pdf         11    0.872  0.862  0.882   75/85 (88%)
+20260227T15_42_49  google/gemini-2.5-flash        pdf         11    0.860  0.851  0.871   74/85 (87%)
+20260227T15_43_24  openai/gpt-4o-mini             pdf         11    0.763  0.750  0.776   66/85 (78%)
+```
+
+(Sorted by F1 descending, truncated for brevity.)
+
+## Development
+
+```bash
+just check    # lint and format via pre-commit
+just test     # pytest
+```
+
+## Data
+
+In `data/`:
+
+- `playgroup_dev_in.tsv` -- input rows (PDF filename + OCR text columns)
+- `playgroup_dev_expected.tsv` -- ground truth in Kleister format
+- `*.pdf` -- the source charity documents
+
+The data is UK open data
+([source](https://github.com/applicaai/kleister-charity/issues/2)).
