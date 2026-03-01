@@ -69,7 +69,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     extract_parser.add_argument(
         "--expected",
-        default="data/playgroup_dev_expected.tsv",
+        default="data/playgroup_dev_expected_corrected.tsv",
         help="Expected TSV path for scoring (default: %(default)s)",
     )
     extract_parser.add_argument(

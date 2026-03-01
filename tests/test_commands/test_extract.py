@@ -1,10 +1,10 @@
-"""Tests for the extraction pipeline. No LLM calls, all mocked."""
+"""Tests for the extraction extract. No LLM calls, all mocked."""
 
 from __future__ import annotations
 
 import pytest
 
-from commands import pipeline
+from commands import extract
 
 # Shared test fixture
 _SAMPLE_ROW = ("doc.pdf", "keys", "djvu_text", "tess411_text", "tess_march_text", "combined_text")
@@ -20,22 +20,22 @@ _SAMPLE_ROW = ("doc.pdf", "keys", "djvu_text", "tess411_text", "tess_march_text"
     ],
 )
 def test_select_text_returns_correct_column(source, expected):
-    assert pipeline.select_text(_SAMPLE_ROW, source=source) == expected
+    assert extract.select_text(_SAMPLE_ROW, source=source) == expected
 
 
 def test_select_text_unknown_source_raises():
     with pytest.raises(ValueError, match="Unknown source"):
-        pipeline.select_text(_SAMPLE_ROW, source="nonexistent")
+        extract.select_text(_SAMPLE_ROW, source="nonexistent")
 
 
 def test_select_text_short_row_raises():
     short_row = ("doc.pdf", "keys")
     with pytest.raises(ValueError, match="columns"):
-        pipeline.select_text(short_row, source="combined")
+        extract.select_text(short_row, source="combined")
 
 
 def test_select_text_default_source_is_combined():
-    assert pipeline.select_text(_SAMPLE_ROW) == "combined_text"
+    assert extract.select_text(_SAMPLE_ROW) == "combined_text"
 
 
 @pytest.mark.parametrize(
@@ -71,11 +71,11 @@ def test_select_text_default_source_is_combined():
     ],
 )
 def test_normalise_for_output(key, value, expected):
-    assert pipeline.normalise_for_output(key, value=value) == expected
+    assert extract.normalise_for_output(key, value=value) == expected
 
 
 def test_normalise_money_with_pound_sign():
-    result = pipeline.normalise_for_output(
+    result = extract.normalise_for_output(
         "income_annually_in_british_pounds", value="\u00a3255,653"
     )
     assert result == "255653.00"
@@ -83,7 +83,7 @@ def test_normalise_money_with_pound_sign():
 
 def _validate(fields: dict[str, str]) -> dict[str, str]:
     """Helper: validate fields through the Pydantic model."""
-    return pipeline.CharityExtraction.model_validate(fields).to_fields()
+    return extract.CharityExtraction.model_validate(fields).to_fields()
 
 
 @pytest.mark.parametrize(
@@ -177,44 +177,44 @@ def test_mix_of_valid_and_invalid():
 
 def test_parse_llm_response_valid_json():
     raw = '{"charity_number": "1132766", "report_date": "2015-12-31"}'
-    result = pipeline.parse_llm_response(raw)
+    result = extract.parse_llm_response(raw)
     assert result == {"charity_number": "1132766", "report_date": "2015-12-31"}
 
 
 def test_parse_llm_response_json_in_triple_backticks():
     raw = 'Here is the data:\n```json\n{"charity_number": "1132766"}\n```'
-    result = pipeline.parse_llm_response(raw)
+    result = extract.parse_llm_response(raw)
     assert result == {"charity_number": "1132766"}
 
 
 def test_parse_llm_response_malformed_json_returns_empty():
     raw = "this is not json at all"
-    result = pipeline.parse_llm_response(raw)
+    result = extract.parse_llm_response(raw)
     assert result == {}
 
 
 def test_parse_llm_response_extra_fields_ignored():
     raw = '{"charity_number": "1132766", "unknown_field": "foo", "report_date": "2015-12-31"}'
-    result = pipeline.parse_llm_response(raw)
+    result = extract.parse_llm_response(raw)
     assert "unknown_field" not in result
     assert result == {"charity_number": "1132766", "report_date": "2015-12-31"}
 
 
 def test_parse_llm_response_empty_string_returns_empty():
-    result = pipeline.parse_llm_response("")
+    result = extract.parse_llm_response("")
     assert result == {}
 
 
 def test_parse_llm_response_numeric_values_converted_to_strings():
     raw = '{"charity_number": 1132766, "income_annually_in_british_pounds": 255653.00}'
-    result = pipeline.parse_llm_response(raw)
+    result = extract.parse_llm_response(raw)
     assert result["charity_number"] == "1132766"
     assert result["income_annually_in_british_pounds"] == "255653.0"
 
 
 def test_parse_llm_response_json_array_returns_empty():
     raw = '[{"charity_number": "1132766"}]'
-    result = pipeline.parse_llm_response(raw)
+    result = extract.parse_llm_response(raw)
     assert result == {}
 
 
@@ -223,7 +223,7 @@ def test_parse_llm_response_json_embedded_in_prose():
         'Based on my analysis:\n{"charity_number": "264289",'
         ' "report_date": "2014-12-31"}\nKey notes: ...'
     )
-    result = pipeline.parse_llm_response(raw)
+    result = extract.parse_llm_response(raw)
     assert result == {"charity_number": "264289", "report_date": "2014-12-31"}
 
 
@@ -233,25 +233,25 @@ def test_format_row_sorted_key_value_pairs():
         "charity_name": "The Sanata Charitable Trust",
         "address__post_town": "Shrewsbury",
     }
-    result = pipeline.format_row(fields)
+    result = extract.format_row(fields)
     parts = result.split("\t")
     keys = [p.split("=")[0] for p in parts]
     assert keys == sorted(keys)
 
 
 def test_format_row_empty_fields_produce_empty_string():
-    assert pipeline.format_row({}) == ""
+    assert extract.format_row({}) == ""
 
 
 def test_format_row_normalisation_applied():
     fields = {"address__post_town": "Bourne End", "income_annually_in_british_pounds": "41721"}
-    result = pipeline.format_row(fields)
+    result = extract.format_row(fields)
     assert "address__post_town=BOURNE_END" in result
     assert "income_annually_in_british_pounds=41721.00" in result
 
 
 def test_format_row_single_field():
-    result = pipeline.format_row({"charity_number": "0300703"})
+    result = extract.format_row({"charity_number": "0300703"})
     assert result == "charity_number=300703"
 
 
@@ -266,7 +266,7 @@ def test_format_row_full_row_matches_expected_format():
         "report_date": "2015-12-31",
         "spending_annually_in_british_pounds": "258287.00",
     }
-    result = pipeline.format_row(fields)
+    result = extract.format_row(fields)
     expected = "\t".join(
         [
             "address__post_town=SHREWSBURY",
@@ -283,114 +283,122 @@ def test_format_row_full_row_matches_expected_format():
 
 
 def test_extract_empty_llm_response(mocker):
-    mock_llm = mocker.patch("commands.pipeline.llm_openrouter")
+    mock_llm = mocker.patch("commands.extract.llm_openrouter")
     mock_llm.call_llm.return_value = None
-    result = pipeline.extract("some text", model="test-model")
+    result = extract.extract("some text", model="test-model")
     assert result == {}
 
 
 def test_extract_llm_returns_valid_json(mocker):
-    mock_llm = mocker.patch("commands.pipeline.llm_openrouter")
+    mock_llm = mocker.patch("commands.extract.llm_openrouter")
     mock_llm.call_llm.return_value = '{"charity_number": "1132766"}'
-    result = pipeline.extract("some text", model="test-model")
+    result = extract.extract("some text", model="test-model")
     assert result == {"charity_number": "1132766"}
 
 
 def test_extract_llm_returns_garbage(mocker):
-    mock_llm = mocker.patch("commands.pipeline.llm_openrouter")
+    mock_llm = mocker.patch("commands.extract.llm_openrouter")
     mock_llm.call_llm.return_value = "I cannot extract any fields from this document."
-    result = pipeline.extract("some text", model="test-model")
+    result = extract.extract("some text", model="test-model")
     assert result == {}
 
 
 def test_normalise_for_output_charity_number_non_numeric():
-    result = pipeline.normalise_for_output("charity_number", value="not-a-number")
+    result = extract.normalise_for_output("charity_number", value="not-a-number")
     assert result == "not-a-number"
 
 
 def test_normalise_for_output_strips_newlines():
-    result = pipeline.normalise_for_output("charity_name", value="Foo\nBar\rBaz")
+    result = extract.normalise_for_output("charity_name", value="Foo\nBar\rBaz")
     assert "\n" not in result
     assert "\r" not in result
     assert result == "Foo_Bar_Baz"
 
 
 def test_normalise_for_output_strips_smart_quotes():
-    result = pipeline.normalise_for_output("charity_name", value="\u2018Foo\u2019s \u201cBar\u201d")
+    result = extract.normalise_for_output("charity_name", value="\u2018Foo\u2019s \u201cBar\u201d")
     assert result == "'Foo's_\"Bar\""
 
 
 def test_extract_from_triple_backticks_with_lang_tag():
     text = '```json\n{"key": "value"}\n```'
-    result = pipeline._extract_from_triple_backticks(text)
+    result = extract._extract_from_triple_backticks(text)
     assert result == '{"key": "value"}'
 
 
 def test_extract_from_triple_backticks_no_lang_tag():
     text = "```\nhello world\n```"
-    result = pipeline._extract_from_triple_backticks(text)
+    result = extract._extract_from_triple_backticks(text)
     assert result == "hello world"
 
 
 def test_extract_from_triple_backticks_none_when_no_backticks():
-    assert pipeline._extract_from_triple_backticks("just plain text") is None
+    assert extract._extract_from_triple_backticks("just plain text") is None
 
 
 def test_extract_from_triple_backticks_strips_comment_markers():
     text = "```\n/// some comment\n```"
-    result = pipeline._extract_from_triple_backticks(text)
+    result = extract._extract_from_triple_backticks(text)
     assert result == "some comment"
 
 
 def test_extract_from_triple_backticks_strips_double_slash():
     text = "```\n// some comment\n```"
-    result = pipeline._extract_from_triple_backticks(text)
+    result = extract._extract_from_triple_backticks(text)
     assert result == "some comment"
 
 
 def test_extract_from_triple_backticks_uses_last_block():
     text = '```\nfirst\n```\nsome text\n```\n{"second": true}\n```'
-    result = pipeline._extract_from_triple_backticks(text)
+    result = extract._extract_from_triple_backticks(text)
     assert result == '{"second": true}'
 
 
 def test_parse_json_object_from_mixed_text_skips_array():
     """The parser should skip JSON objects inside arrays."""
     text = 'Some text [{"charity_number": "123"}] more text'
-    result = pipeline._parse_json_object_from_mixed_text(text)
+    result = extract._parse_json_object_from_mixed_text(text)
     assert result is None
 
 
 def test_parse_json_object_from_mixed_text_finds_standalone():
     """The parser should find a standalone JSON object in mixed text."""
     text = 'Before {"charity_number": "456"} after'
-    result = pipeline._parse_json_object_from_mixed_text(text)
+    result = extract._parse_json_object_from_mixed_text(text)
     assert result == {"charity_number": "456"}
 
 
 def test_parse_json_object_from_mixed_text_skips_array_finds_later_object():
     """When an array comes first, the parser should find a later standalone object."""
     text = 'List: [{"a": 1}] but also {"charity_number": "789"}'
-    result = pipeline._parse_json_object_from_mixed_text(text)
+    result = extract._parse_json_object_from_mixed_text(text)
     assert result == {"charity_number": "789"}
 
 
 def test_extract_json_dict_non_json_backtick_falls_through():
     """When backtick content is not valid JSON, fall through to mixed-text parser."""
     raw = '```\nnot json at all\n```\n{"charity_number": "111"}'
-    result = pipeline._extract_json_dict(raw)
+    result = extract._extract_json_dict(raw)
     assert result == {"charity_number": "111"}
 
 
 def test_parse_llm_response_all_fields_invalid_logs_warning():
     """When JSON parses but all fields fail validation, should return empty dict."""
     raw = '{"charity_number": "12345678", "report_date": "not-a-date"}'
-    result = pipeline.parse_llm_response(raw)
+    result = extract.parse_llm_response(raw)
     assert result == {}
+
+
+def test_get_git_commit_returns_short_hash():
+    result = extract._get_git_commit()
+    # We're in a git repo so this should be a hex string
+    assert result != "unknown"
+    assert 7 <= len(result) <= 12
+    assert all(c in "0123456789abcdef" for c in result)
 
 
 def test_write_output(tmp_path):
     out = tmp_path / "out.tsv"
-    pipeline.write_output(["line1", "line2"], output_path=str(out))
+    extract.write_output(["line1", "line2"], output_path=str(out))
     lines = out.read_text().splitlines()
     assert lines == ["line1", "line2"]

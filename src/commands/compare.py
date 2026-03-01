@@ -10,8 +10,12 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Final
 
 from lib import utils
+
+# Fallback for missing config fields in older experiments
+MISSING_VALUE: Final[str] = "?"
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +28,8 @@ class Experiment:
     model: str
     source: str
     num_documents: int | str
+    expected_file: str = MISSING_VALUE
+    git_commit: str = MISSING_VALUE
     f1: float | None = None
     precision: float | None = None
     recall: float | None = None
@@ -66,9 +72,11 @@ class Experiment:
 
         return cls(
             folder=path.name,
-            model=config.get("model", "?"),
-            source=config.get("source", "?"),
-            num_documents=config.get("num_documents", "?"),
+            model=config.get("model", MISSING_VALUE),
+            source=config.get("source", MISSING_VALUE),
+            num_documents=config.get("num_documents", MISSING_VALUE),
+            expected_file=config.get("expected_file", MISSING_VALUE),
+            git_commit=config.get("git_commit", MISSING_VALUE),
             f1=scores.get("f1"),
             precision=scores.get("precision"),
             recall=scores.get("recall"),
@@ -105,6 +113,8 @@ def _format_cells(exp: Experiment) -> tuple[str, ...]:
         exp.model,
         exp.source,
         str(exp.num_documents),
+        exp.expected_file,
+        exp.git_commit,
         f1,
         prec,
         recall,
@@ -123,7 +133,18 @@ def format_table(experiments: list[Experiment]) -> str:
     """
     experiments.sort(key=_sort_key, reverse=True)
 
-    headers = ("Timestamp", "Model", "Source", "Docs", "F1", "Prec", "Recall", "Matched")
+    headers = (
+        "Timestamp",
+        "Model",
+        "Source",
+        "Docs",
+        "Expected",
+        "Commit",
+        "F1",
+        "Prec",
+        "Recall",
+        "Matched",
+    )
     rows = [_format_cells(exp) for exp in experiments]
 
     return "\n".join(utils.format_table(headers, rows))

@@ -84,14 +84,14 @@ just compare
 ```
 
 ```
-Timestamp          Model                          Source      Docs  F1     Prec   Recall  Matched
------------------  -----------------------------  ----------  ----  -----  -----  ------  -----------
-20260227T15_50_28  google/gemini-3-flash-preview  pdf         11    0.902  0.886  0.918   78/85 (92%)
-20260227T16_02_17  google/gemini-3-flash-preview  pdf-vision  11    0.902  0.886  0.918   78/85 (92%)
-20260227T15_47_27  anthropic/claude-haiku-4.5     pdf         11    0.879  0.864  0.894   76/85 (89%)
-20260227T15_31_50  anthropic/claude-3.5-haiku     pdf         11    0.872  0.862  0.882   75/85 (88%)
-20260227T15_42_49  google/gemini-2.5-flash        pdf         11    0.860  0.851  0.871   74/85 (87%)
-20260227T15_43_24  openai/gpt-4o-mini             pdf         11    0.763  0.750  0.776   66/85 (78%)
+Timestamp          Model                          Source      Docs  Expected                                   Commit   F1     Prec   Recall  Matched
+-----------------  -----------------------------  ----------  ----  -----------------------------------------  -------  -----  -----  ------  -----------
+20260227T15_50_28  google/gemini-3-flash-preview  pdf         11    data/playgroup_dev_expected_corrected.tsv   f0bc168  0.902  0.886  0.918   78/85 (92%)
+20260227T16_02_17  google/gemini-3-flash-preview  pdf-vision  11    data/playgroup_dev_expected_corrected.tsv   f0bc168  0.902  0.886  0.918   78/85 (92%)
+20260227T15_47_27  anthropic/claude-haiku-4.5     pdf         11    data/playgroup_dev_expected_corrected.tsv   f0bc168  0.879  0.864  0.894   76/85 (89%)
+20260227T15_31_50  anthropic/claude-3.5-haiku     pdf         11    data/playgroup_dev_expected_corrected.tsv   8e09b7c  0.872  0.862  0.882   75/85 (88%)
+20260227T15_42_49  google/gemini-2.5-flash        pdf         11    data/playgroup_dev_expected_corrected.tsv   8e09b7c  0.860  0.851  0.871   74/85 (87%)
+20260227T15_43_24  openai/gpt-4o-mini             pdf         11    data/playgroup_dev_expected_corrected.tsv   8e09b7c  0.763  0.750  0.776   66/85 (78%)
 ```
 
 (Sorted by F1 descending, truncated for brevity.)
@@ -108,7 +108,10 @@ just test     # pytest
 In `data/`:
 
 - `playgroup_dev_in.tsv` -- input rows (PDF filename + OCR text columns)
-- `playgroup_dev_expected.tsv` -- ground truth in Kleister format
+- `playgroup_dev_expected.tsv` -- original Kleister ground truth
+- `playgroup_dev_expected_corrected.tsv` -- corrected ground truth (used
+  by default). Fixes 4 `charity_name` annotations where the original
+  labels don't match the document text.
 - `*.pdf` -- the source charity documents
 
 The data is UK open data

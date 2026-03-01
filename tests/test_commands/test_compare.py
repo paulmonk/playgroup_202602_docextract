@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from commands.compare import Experiment, _format_cells, _sort_key, format_table, run
+from commands.compare import MISSING_VALUE, Experiment, _format_cells, _sort_key, format_table, run
 
 
 def test_from_path_with_config_and_scores(tmp_path):
@@ -18,6 +18,8 @@ def test_from_path_with_config_and_scores(tmp_path):
                 "model": "anthropic/claude-3.5-haiku",
                 "source": "combined",
                 "num_documents": 5,
+                "expected_file": "data/expected.tsv",
+                "git_commit": "abc1234",
             }
         )
     )
@@ -31,6 +33,8 @@ def test_from_path_with_config_and_scores(tmp_path):
     assert exp.f1 == 0.85
     assert exp.matched == 40
     assert exp.total_fields == 50
+    assert exp.expected_file == "data/expected.tsv"
+    assert exp.git_commit == "abc1234"
 
 
 def test_from_path_config_only_no_scores(tmp_path):
@@ -58,9 +62,11 @@ def test_from_path_missing_config_fields_default(tmp_path):
     (expt / "config.json").write_text("{}")
     exp = Experiment.from_path(expt)
     assert exp is not None
-    assert exp.model == "?"
-    assert exp.source == "?"
-    assert exp.num_documents == "?"
+    assert exp.model == MISSING_VALUE
+    assert exp.source == MISSING_VALUE
+    assert exp.num_documents == MISSING_VALUE
+    assert exp.expected_file == MISSING_VALUE
+    assert exp.git_commit == MISSING_VALUE
 
 
 def test_from_path_corrupt_config_json_returns_none(tmp_path):
@@ -111,19 +117,21 @@ def test_format_cells_with_scores():
     )
     cells = _format_cells(exp)
     assert cells[0] == "20260101"
-    assert cells[4] == "0.850"
-    assert cells[5] == "0.900"
-    assert "40/50" in cells[7]
-    assert "80%" in cells[7]
+    assert cells[6] == "0.850"
+    assert cells[7] == "0.900"
+    assert "40/50" in cells[9]
+    assert "80%" in cells[9]
+    assert len(cells) == 10
 
 
 def test_format_cells_without_scores():
     exp = Experiment(folder="20260101", model="m", source="s", num_documents=5)
     cells = _format_cells(exp)
-    assert cells[4] == "-"
-    assert cells[5] == "-"
     assert cells[6] == "-"
     assert cells[7] == "-"
+    assert cells[8] == "-"
+    assert cells[9] == "-"
+    assert len(cells) == 10
 
 
 def test_format_cells_matched_without_total_fields_shows_dash():
@@ -138,8 +146,8 @@ def test_format_cells_matched_without_total_fields_shows_dash():
         total_fields=None,
     )
     cells = _format_cells(exp)
-    assert cells[7] == "-"
-    assert "None" not in cells[7]
+    assert cells[9] == "-"
+    assert "None" not in cells[9]
 
 
 def test_format_table_sorts_by_f1_descending():
@@ -162,6 +170,8 @@ def test_format_table_header_present():
     header = table.splitlines()[0]
     assert "Timestamp" in header
     assert "Model" in header
+    assert "Expected" in header
+    assert "Commit" in header
     assert "F1" in header
 
 
@@ -185,6 +195,8 @@ def test_run_prints_table(tmp_path, capsys):
                 "model": "anthropic/claude-3.5-haiku",
                 "source": "combined",
                 "num_documents": 5,
+                "expected_file": "data/expected.tsv",
+                "git_commit": "abc1234",
             }
         )
     )

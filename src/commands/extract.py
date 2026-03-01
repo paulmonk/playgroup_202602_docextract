@@ -12,6 +12,7 @@ import datetime as dt
 import json
 import logging
 import re
+import subprocess
 import sys
 from collections.abc import Mapping
 from pathlib import Path
@@ -222,6 +223,22 @@ class ExperimentConfig:
     input_file: str
     num_documents: int
     timestamp: str
+    git_commit: str
+    expected_file: str
+
+
+def _get_git_commit() -> str:
+    """Return the short git commit hash, or ``"unknown"`` on failure."""
+    try:
+        result = subprocess.run(
+            ["/usr/bin/git", "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return "unknown"
 
 
 def _extract_from_triple_backticks(text: str) -> str | None:
@@ -461,6 +478,8 @@ def save_config(
     source: str,
     input_path: str,
     num_documents: int,
+    git_commit: str,
+    expected_file: str,
 ) -> None:
     """Save experiment metadata as config.json.
 
@@ -470,6 +489,8 @@ def save_config(
         source: OCR source name.
         input_path: Path to the input TSV.
         num_documents: Number of documents processed.
+        git_commit: Short git commit hash.
+        expected_file: Path to the expected TSV.
     """
     config = ExperimentConfig(
         model=model,
@@ -477,6 +498,8 @@ def save_config(
         input_file=input_path,
         num_documents=num_documents,
         timestamp=dt.datetime.now(dt.UTC).isoformat(),
+        git_commit=git_commit,
+        expected_file=expected_file,
     )
     config_path = Path("expts") / folder / "config.json"
     with config_path.open("w") as f:
@@ -602,6 +625,8 @@ def run(
             source=source,
             input_path=input_path,
             num_documents=len(rows),
+            git_commit=_get_git_commit(),
+            expected_file=expected_path,
         )
     finally:
         llm_logger.removeHandler(fh)
